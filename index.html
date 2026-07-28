@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ノウハウ管理システム | Know-How Repository</title>
+    <style>
+        /* --------------------------------------------------
+         * 基本設定 & テーマカラー (企業向け業務ツール風)
+         * -------------------------------------------------- */
+        :root {
+            --primary-color: #1e3a8a;      /* メインネイビー */
+            --primary-hover: #1d4ed8;
+            --secondary-color: #4b5563;    /* グレー */
+            --bg-color: #f3f4f6;           /* 背景グレー */
+            --card-bg: #ffffff;            /* カード白 */
+            --border-color: #d1d5db;       /* 境界線 */
+            --text-dark: #1f2937;          /* 本文黒 */
+            --text-muted: #6b7280;         /* 補助テキスト */
+            --fav-color: #eab308;          /* お気に入り黄 */
+            --accent-green: #10b981;       /* 成功・登録など */
+            --accent-red: #ef4444;         /* 警告・削除 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --------------------------------------------------
+         * ヘッダーエリア
+         * -------------------------------------------------- */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        header .system-tag {
+            font-size: 12px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        /* --------------------------------------------------
+         * 統計エリア（ダッシュボード上部）
+         * -------------------------------------------------- */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-card.primary {
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .stat-card.favorite {
+            border-left: 5px solid var(--fav-color);
+        }
+
+        .stat-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        /* --------------------------------------------------
+         * メインレイアウト（2カラム構造）
+         * -------------------------------------------------- */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* サイドバー */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* カード共通スタイル */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* フォーム部品 */
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--text-dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            color: var(--text-dark);
+            background-color: #fafafa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: #fff;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        /* ボタン */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #374151;
+        }
+
+        .btn-danger {
+            background-color: var(--accent-red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* 検索・絞り込みエリア */
+        .filter-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .filter-info .clear-btn {
+            color: var(--accent-red);
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        /* --------------------------------------------------
+         * ノウハウ一覧エリア
+         * -------------------------------------------------- */
+        .list-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            background-color: var(--card-bg);
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .knowhow-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            position: relative;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .knowhow-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            gap: 15px;
+        }
+
+        .item-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            flex: 1;
+        }
+
+        /* メタ情報（日時、カテゴリ等） */
+        .item-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .item-category {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .item-category:hover {
+            background-color: #dbeafe;
+        }
+
+        .item-date {
+            display: flex;
+            align-items: center;
+        }
+
+        /* タグ */
+        .item-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .tag-badge {
+            background-color: #f3f4f6;
+            color: #374151;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+        }
+
+        .tag-badge:hover {
+            background-color: #e5e7eb;
+            color: var(--primary-color);
+        }
+
+        /* コンテンツ本文 */
+        .item-content {
+            font-size: 14px;
+            color: #374151;
+            white-space: pre-wrap;
+            border-top: 1px solid #f3f4f6;
+            padding-top: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* アクションツールバー */
+        .item-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px dashed #f3f4f6;
+            padding-top: 10px;
+        }
+
+        .action-left {
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-link {
+            font-size: 13px;
+            color: var(--secondary-color);
+            cursor: pointer;
+            background: none;
+            border: none;
+            text-decoration: underline;
+        }
+
+        .action-link:hover {
+            color: var(--primary-color);
+        }
+
+        .action-link.delete {
+            color: var(--accent-red);
+        }
+
+        .action-link.delete:hover {
+            color: #b91c1c;
+        }
+
+        /* お気に入りスター */
+        .fav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #d1d5db;
+            transition: color 0.15s;
+        }
+
+        .fav-btn.active {
+            color: var(--fav-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ヘッダーエリア -->
+    <header>
+        <h1>ノウハウ管理システム</h1>
+        <div class="system-tag">Know-How Repository v1.0</div>
+    </header>
+
+    <!-- 統計エリア -->
+    <div class="stats-container">
+        <div class="stat-card primary">
+            <span class="stat-title">登録ノウハウ総数</span>
+            <span class="stat-value" id="stat-total">0</span>
+        </div>
+        <div class="stat-card favorite">
+            <span class="stat-title">お気に入り</span>
+            <span class="stat-value" id="stat-fav">0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-title">登録カテゴリ数</span>
+            <span class="stat-value" id="stat-categories">0</span>
+        </div>
+    </div>
+
+    <!-- メインレイアウト -->
+    <div class="app-layout">
+        <!-- 左側：登録・検索サイドバー -->
+        <aside class="sidebar">
+            
+            <!-- 登録エリア -->
+            <section class="card">
+                <h2 class="card-title" id="form-title">ノウハウ新規登録</h2>
+                <form id="knowhow-form" onsubmit="handleFormSubmit(event)">
+                    <input type="hidden" id="edit-id">
+                    
+                    <div class="form-group">
+                        <label for="input-title">タイトル <span style="color:var(--accent-red)">*</span></label>
+                        <input type="text" id="input-title" class="form-control" placeholder="例: Gitでコンフリクトを解消する手順" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-category">カテゴリ <span style="color:var(--accent-red)">*</span></label>
+                        <input type="text" id="input-category" class="form-control" placeholder="例: 開発 / インフラ / 業務効率化" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-tags">タグ (カンマ区切り)</label>
+                        <input type="text" id="input-tags" class="form-control" placeholder="例: git, チーム開発, 初心者向け">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-content">内容 <span style="color:var(--accent-red)">*</span></label>
+                        <textarea id="input-content" class="form-control" placeholder="ここに具体的な作業内容や注意書き、ソースコードなどを記述してください。" required></textarea>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary id-btn" id="submit-btn">登録する</button>
+                        <button type="button" class="btn btn-secondary" id="cancel-btn" style="display: none;" onclick="resetForm()">キャンセル</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- 検索エリア -->
+            <section class="card">
+                <h2 class="card-title">条件から検索</h2>
+                
+                <div class="form-group">
+                    <label for="search-keyword">キーワード検索</label>
+                    <input type="text" id="search-keyword" class="form-control" placeholder="タイトルや内容から検索" oninput="filterData()">
+                </div>
+
+                <div class="form-group">
+                    <label for="filter-category">カテゴリで絞り込み</label>
+                    <select id="filter-category" class="form-control" onchange="filterData()">
+                        <option value="all">すべて表示</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="filter-fav-only" onchange="filterData()" style="margin-right: 8px; width: 16px; height: 16px;">
+                        お気に入りのみ表示
+                    </label>
+                </div>
+            </section>
+
+        </aside>
+
+        <!-- 右側：一覧エリア -->
+        <main>
+            <!-- アクティブフィルタ表示 -->
+            <div id="active-filter-bar" class="filter-info" style="display: none;">
+                <div>
+                    <span>現在絞り込み中: </span>
+                    <strong id="active-filter-text"></strong>
+                </div>
+                <span class="clear-btn" onclick="clearFilters()">すべての絞り込みを解除</span>
+            </div>
+
+            <div class="list-section" id="knowhow-list">
+                <!-- JavaScriptにより動的にノウハウカードが挿入されます -->
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    // --------------------------------------------------
+    // データ初期化 & 状態管理
+    // --------------------------------------------------
+    let knowhows = JSON.parse(localStorage.getItem('knowhow_db')) || [];
+    
+    // 現在選択されている検索条件
+    let selectedTag = 'all';
+
+    // --------------------------------------------------
+    // ページロード時の初期設定
+    // --------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+        render();
+    });
+
+    // --------------------------------------------------
+    // メインのレンダリング処理
+    // --------------------------------------------------
+    function render() {
+        renderStats();
+        populateCategoryFilter();
+        renderList();
+    }
+
+    // 1. 統計情報の表示
+    function renderStats() {
+        document.getElementById('stat-total').innerText = knowhows.length;
+        
+        const favCount = knowhows.filter(item => item.isFavorite).length;
+        document.getElementById('stat-fav').innerText = favCount;
+
+        // 重複を除いたカテゴリ数
+        const uniqueCategories = [...new Set(knowhows.map(item => item.category.trim()))].filter(Boolean);
+        document.getElementById('stat-categories').innerText = uniqueCategories.length;
+    }
+
+    // 2. 検索用のカテゴリ選択肢を動的に生成
+    function populateCategoryFilter() {
+        const filterSelect = document.getElementById('filter-category');
+        const currentValue = filterSelect.value;
+
+        // 一旦「すべて表示」以外を削除
+        filterSelect.innerHTML = '<option value="all">すべて表示</option>';
+
+        const uniqueCategories = [...new Set(knowhows.map(item => item.category.trim()))].filter(Boolean);
+        
+        uniqueCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.innerText = cat;
+            filterSelect.appendChild(option);
+        });
+
+        // 以前選んでいた選択肢がまだ存在すれば再設定、無ければ"all"に戻す
+        if (uniqueCategories.includes(currentValue)) {
+            filterSelect.value = currentValue;
+        } else {
+            filterSelect.value = 'all';
+        }
+    }
+
+    // 3. フィルタを適用し、一覧を表示
+    function renderList() {
+        const listContainer = document.getElementById('knowhow-list');
+        listContainer.innerHTML = '';
+
+        const keyword = document.getElementById('search-keyword').value.toLowerCase().trim();
+        const category = document.getElementById('filter-category').value;
+        const favOnly = document.getElementById('filter-fav-only').checked;
+
+        // アクティブフィルタ表示バーの制御
+        const filterBar = document.getElementById('active-filter-bar');
+        const filterText = document.getElementById('active-filter-text');
+        
+        let activeFiltersDesc = [];
+        if (category !== 'all') activeFiltersDesc.push(`カテゴリ「${category}」`);
+        if (selectedTag !== 'all') activeFiltersDesc.push(`タグ「#${selectedTag}」`);
+        if (favOnly) activeFiltersDesc.push(`お気に入り`);
+        if (keyword) activeFiltersDesc.push(`キーワード「${keyword}」`);
+
+        if (activeFiltersDesc.length > 0) {
+            filterBar.style.display = 'flex';
+            filterText.innerText = activeFiltersDesc.join(' + ');
+        } else {
+            filterBar.style.display = 'none';
+        }
+
+        // フィルタリング処理
+        const filteredList = knowhows.filter(item => {
+            // キーワード検索 (タイトル、内容、カテゴリ、タグの中から検索)
+            const matchesKeyword = !keyword || 
+                item.title.toLowerCase().includes(keyword) || 
+                item.content.toLowerCase().includes(keyword) ||
+                item.category.toLowerCase().includes(keyword) ||
+                (item.tags && item.tags.some(t => t.toLowerCase().includes(keyword)));
+
+            // カテゴリ絞り込み
+            const matchesCategory = (category === 'all' || item.category === category);
+
+            // タグ選択
+            const matchesTag = (selectedTag === 'all' || (item.tags && item.tags.includes(selectedTag)));
+
+            // お気に入りのみ表示
+            const matchesFav = (!favOnly || item.isFavorite);
+
+            return matchesKeyword && matchesCategory && matchesTag && matchesFav;
+        });
+
+        // データ件数がゼロの場合
+        if (filteredList.length === 0) {
+            listContainer.innerHTML = '<div class="no-data">該当するノウハウが見つかりませんでした。</div>';
+            return;
+        }
+
+        // 一覧表示のカードを生成（新しい登録日時順に並び替え）
+        const sortedList = [...filteredList].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        sortedList.forEach(item => {
+            const itemElement = document.createElement('article');
+            itemElement.className = `knowhow-item priority-medium`; // デフォルトで中程度の優先度カラー風枠線
+
+            // 優先度の枠線に代わり、企業の洗練されたカラー（プライマリ）を左線に適用
+            itemElement.style.borderLeft = `5px solid var(--primary-color)`;
+
+            // タグバッジのHTML生成
+            const tagHtml = (item.tags && item.tags.length > 0) 
+                ? item.tags.map(tag => `<span class="tag-badge" onclick="selectTag('${tag}')">#${tag}</span>`).join('') 
+                : '';
+
+            itemElement.innerHTML = `
+                <div class="item-header">
+                    <h3 class="item-title">${escapeHTML(item.title)}</h3>
+                    <button class="fav-btn ${item.isFavorite ? 'active' : ''}" onclick="toggleFavorite('${item.id}')" title="お気に入りに登録">★</button>
+                </div>
+                <div class="item-meta">
+                    <span class="item-category" onclick="selectCategory('${item.category}')">${escapeHTML(item.category)}</span>
+                    <span class="item-date">登録日: ${item.createdAt}</span>
+                </div>
+                ${tagHtml ? `<div class="item-tags">${tagHtml}</div>` : ''}
+                <div class="item-content">${escapeHTML(item.content)}</div>
+                <div class="item-actions">
+                    <div class="action-left">
+                        <button class="action-link" onclick="startEdit('${item.id}')">編集</button>
+                        <button class="action-link delete" onclick="deleteItem('${item.id}')">削除</button>
+                    </div>
+                </div>
+            `;
+            listContainer.appendChild(itemElement);
+        });
+    }
+
+    // --------------------------------------------------
+    // アクション処理（登録・更新、お気に入り、編集、削除）
+    // --------------------------------------------------
+
+    // 登録・更新フォームのサブミット
+    function handleFormSubmit(event) {
+        event.preventDefault();
+
+        const editId = document.getElementById('edit-id').value;
+        const title = document.getElementById('input-title').value.trim();
+        const category = document.getElementById('input-category').value.trim();
+        const tagsInput = document.getElementById('input-tags').value.trim();
+        const content = document.getElementById('input-content').value.trim();
+
+        // タグの配列変換（カンマや空白を除去）
+        const tags = tagsInput 
+            ? tagsInput.split(',').map(tag => tag.trim()).filter(Boolean) 
+            : [];
+
+        if (editId) {
+            // 既存データの更新
+            const targetIndex = knowhows.findIndex(item => item.id === editId);
+            if (targetIndex !== -1) {
+                knowhows[targetIndex].title = title;
+                knowhows[targetIndex].category = category;
+                knowhows[targetIndex].tags = tags;
+                knowhows[targetIndex].content = content;
+                // 更新日時はあえて追記せず、作成日時を保持する形にします
+            }
+        } else {
+            // 新規データの追加
+            const newKnowhow = {
+                id: Date.now().toString(),
+                title: title,
+                category: category,
+                tags: tags,
+                content: content,
+                isFavorite: false,
+                createdAt: getCurrentDateTime()
+            };
+            knowhows.push(newKnowhow);
+        }
+
+        saveToLocalStorage();
+        resetForm();
+        render();
+    }
+
+    // お気に入りの切り替え
+    function toggleFavorite(id) {
+        const target = knowhows.find(item => item.id === id);
+        if (target) {
+            target.isFavorite = !target.isFavorite;
+            saveToLocalStorage();
+            render();
+        }
+    }
+
+    // 編集の開始
+    function startEdit(id) {
+        const target = knowhows.find(item => item.id === id);
+        if (!target) return;
+
+        // フォームに値をセット
+        document.getElementById('edit-id').value = target.id;
+        document.getElementById('input-title').value = target.title;
+        document.getElementById('input-category').value = target.category;
+        document.getElementById('input-tags').value = target.tags ? target.tags.join(', ') : '';
+        document.getElementById('input-content').value = target.content;
+
+        // 表示の切り替え
+        document.getElementById('form-title').innerText = 'ノウハウの編集';
+        document.getElementById('submit-btn').innerText = '更新する';
+        document.getElementById('cancel-btn').style.display = 'inline-flex';
+
+        // フォーム位置にスクロール（レスポンシブ時）
+        document.getElementById('form-title').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // フォームの初期化（キャンセル時等）
+    function resetForm() {
+        document.getElementById('edit-id').value = '';
+        document.getElementById('knowhow-form').reset();
+
+        document.getElementById('form-title').innerText = 'ノウハウ新規登録';
+        document.getElementById('submit-btn').innerText = '登録する';
+        document.getElementById('cancel-btn').style.display = 'none';
+    }
+
+    // 削除処理
+    function deleteItem(id) {
+        if (confirm('このノウハウを削除してもよろしいですか？')) {
+            knowhows = knowhows.filter(item => item.id !== id);
+            saveToLocalStorage();
+            
+            // 編集中のアイテムが削除された場合はフォームをリセット
+            if (document.getElementById('edit-id').value === id) {
+                resetForm();
+            }
+            render();
+        }
+    }
+
+    // --------------------------------------------------
+    // 検索・フィルタリング制御
+    // --------------------------------------------------
+    function filterData() {
+        renderList();
+    }
+
+    // 特定のタグをクリックして絞り込む
+    function selectTag(tag) {
+        selectedTag = tag;
+        renderList();
+    }
+
+    // 特定のカテゴリをクリックして絞り込む
+    function selectCategory(cat) {
+        document.getElementById('filter-category').value = cat;
+        renderList();
+    }
+
+    // 全てのフィルタ条件をクリア
+    function clearFilters() {
+        document.getElementById('search-keyword').value = '';
+        document.getElementById('filter-category').value = 'all';
+        document.getElementById('filter-fav-only').checked = false;
+        selectedTag = 'all';
+        renderList();
+    }
+
+    // --------------------------------------------------
+    // ユーティリティ関数
+    // --------------------------------------------------
+    function saveToLocalStorage() {
+        localStorage.setItem('knowhow_db', JSON.stringify(knowhows));
+    }
+
+    // 現在日時のフォーマット生成 (YYYY/MM/DD HH:mm)
+    function getCurrentDateTime() {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
+    }
+
+    // XSS対策：特殊文字のエスケープ
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+</script>
+
+</body>
+</html>
